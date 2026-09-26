@@ -1,0 +1,287 @@
+<UserControl x:Class="TaskbarMonitor.Views.AppearancePage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:TaskbarMonitor.Controls"
+             xmlns:core="clr-namespace:TaskbarMonitor.Core"
+             xmlns:theming="clr-namespace:TaskbarMonitor.Theming">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/Themes/ControlStyles.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+
+            <Style x:Key="PreviewCaption" TargetType="TextBlock">
+                <Setter Property="FontSize" Value="12.5" />
+                <Setter Property="Margin" Value="2,0,0,6" />
+                <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+            </Style>
+
+            <!-- "Сейчас" badge next to the preview that matches the real taskbar -->
+            <Style x:Key="NowBadge" TargetType="Border" BasedOn="{StaticResource Badge}">
+                <Setter Property="Margin" Value="8,0,0,6" />
+                <Setter Property="Visibility" Value="Collapsed" />
+                <Setter Property="Background" Value="{DynamicResource AccentFillColorDefaultBrush}" />
+            </Style>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <StackPanel>
+        <TextBlock Text="Оформление" Style="{StaticResource PageTitle}" />
+        <TextBlock Style="{StaticResource PageSubtitle}"
+                   Text="Цвет текста выбирается по теме панели задач: на тёмной — светлый, на светлой — тёмный. Подписи берут оттенок акцентного цвета Windows, подходящий для этой темы, с контрастом не ниже 4,5 : 1." />
+
+        <Border Style="{StaticResource Card}" Margin="0,16,0,0" Padding="16">
+            <StackPanel>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Тёмная панель задач" Style="{StaticResource PreviewCaption}" />
+                    <Border x:Name="DarkNow">
+                        <Border.Style>
+                            <Style TargetType="Border" BasedOn="{StaticResource NowBadge}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding ActiveSurface}" Value="{x:Static theming:TaskbarSurface.Dark}">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <TextBlock Text="сейчас" Style="{StaticResource BadgeText}" Foreground="{DynamicResource TextOnAccentFillColorPrimaryBrush}" />
+                    </Border>
+                </StackPanel>
+                <controls:OverlayPreview Surface="Dark" />
+
+                <StackPanel Orientation="Horizontal" Margin="0,14,0,0">
+                    <TextBlock Text="Светлая панель задач" Style="{StaticResource PreviewCaption}" />
+                    <Border x:Name="LightNow">
+                        <Border.Style>
+                            <Style TargetType="Border" BasedOn="{StaticResource NowBadge}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding ActiveSurface}" Value="{x:Static theming:TaskbarSurface.Light}">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <TextBlock Text="сейчас" Style="{StaticResource BadgeText}" Foreground="{DynamicResource TextOnAccentFillColorPrimaryBrush}" />
+                    </Border>
+                </StackPanel>
+                <controls:OverlayPreview Surface="Light" />
+
+                <StackPanel Orientation="Horizontal" Margin="0,14,0,0">
+                    <TextBlock Text="Панель в цвет акцента" Style="{StaticResource PreviewCaption}" />
+                    <Border x:Name="AccentNow">
+                        <Border.Style>
+                            <Style TargetType="Border" BasedOn="{StaticResource NowBadge}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding ActiveSurface}" Value="{x:Static theming:TaskbarSurface.Accent}">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <TextBlock Text="сейчас" Style="{StaticResource BadgeText}" Foreground="{DynamicResource TextOnAccentFillColorPrimaryBrush}" />
+                    </Border>
+                </StackPanel>
+                <controls:OverlayPreview Surface="Accent" />
+
+                <Grid Margin="0,14,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Style="{StaticResource RowDescription}" VerticalAlignment="Center" Margin="2,0,16,0"
+                               Text="Акцентный цвет и тема меняются в параметрах Windows — оверлей подхватит их сразу." />
+                    <Button Grid.Column="1" Command="{Binding OpenColorSettingsCommand}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Цвета Windows" />
+                            <controls:Glyph Text="&#xE8A7;" FontFamily="{StaticResource IconFontFamily}" FontSize="12"
+                                            Margin="8,1,0,0" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+                </Grid>
+            </StackPanel>
+        </Border>
+
+        <TextBlock Text="Цвета" Style="{StaticResource SectionTitle}" />
+        <Border Style="{StaticResource Card}">
+            <StackPanel>
+                <controls:SettingRow Glyph="&#xE790;" Title="Цвет подписей" Description="CPU, RAM, GPU и остальные названия">
+                    <ComboBox x:Name="LabelMode" Style="{StaticResource SettingsCombo}" ItemsSource="{Binding LabelColorOptions}"
+                              SelectedValue="{Binding LabelColor}" />
+                    <controls:SettingRow.Detail>
+                        <WrapPanel x:Name="LabelCustom">
+                            <WrapPanel.Style>
+                                <Style TargetType="WrapPanel">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding LabelColor}" Value="{x:Static core:LabelColorMode.Custom}">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </WrapPanel.Style>
+                            <controls:ColorPicker Caption="Светлая панель" Hex="{Binding CustomLabelLight}" Margin="0,0,8,0" />
+                            <controls:ColorPicker Caption="Тёмная панель" Hex="{Binding CustomLabelDark}" />
+                        </WrapPanel>
+                    </controls:SettingRow.Detail>
+                </controls:SettingRow>
+                <Border Style="{StaticResource Divider}" />
+                <controls:SettingRow Glyph="&#xE8EF;" Title="Цвет значений" Description="Проценты, градусы и скорость">
+                    <ComboBox Style="{StaticResource SettingsCombo}" ItemsSource="{Binding ValueColorOptions}"
+                              SelectedValue="{Binding ValueColor}" />
+                    <controls:SettingRow.Detail>
+                        <WrapPanel x:Name="ValueCustom">
+                            <WrapPanel.Style>
+                                <Style TargetType="WrapPanel">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding ValueColor}" Value="{x:Static core:ValueColorMode.Custom}">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </WrapPanel.Style>
+                            <controls:ColorPicker Caption="Светлая панель" Hex="{Binding CustomValueLight}" Margin="0,0,8,0" />
+                            <controls:ColorPicker Caption="Тёмная панель" Hex="{Binding CustomValueDark}" />
+                        </WrapPanel>
+                    </controls:SettingRow.Detail>
+                </controls:SettingRow>
+                <Border Style="{StaticResource Divider}" />
+                <controls:SettingRow Glyph="&#xE793;" Title="Тема панели задач"
+                                     Description="«Как в Windows» подходит почти всем. Ручной выбор нужен, если цвет панели меняет сторонняя программа (TranslucentTB, Windhawk и т. п.)">
+                    <ComboBox Style="{StaticResource SettingsCombo}" ItemsSource="{Binding ThemeOverrideOptions}"
+                              SelectedValue="{Binding ThemeOverride}" />
+                </controls:SettingRow>
+            </StackPanel>
+        </Border>
+
+        <TextBlock Text="Цвет по нагрузке" Style="{StaticResource SectionTitle}" />
+        <Border Style="{StaticResource Card}">
+            <StackPanel>
+                <controls:SettingRow Glyph="&#xE945;" Title="Подсвечивать высокую нагрузку"
+                                     Description="Значение становится жёлтым при высокой нагрузке и красным при критической. Оттенки тоже подобраны под тему панели">
+                    <CheckBox Style="{StaticResource ToggleSwitch}" IsChecked="{Binding LoadColors}" />
+                </controls:SettingRow>
+                <StackPanel IsEnabled="{Binding LoadColors}">
+                    <Border Style="{StaticResource Divider}" />
+                    <controls:SettingRow Title="Загрузка: высокая" Description="Процессор, память, видеокарта, диски">
+                        <controls:SettingRow.Detail>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <Slider Style="{StaticResource SettingsSlider}" Minimum="10" Maximum="99" TickFrequency="1"
+                                        Value="{Binding WarnPercent}" AutomationProperties.Name="Порог высокой загрузки" />
+                                <TextBlock Grid.Column="1" Style="{StaticResource ValueText}" Text="{Binding WarnPercent, StringFormat={}{0} %}" />
+                            </Grid>
+                        </controls:SettingRow.Detail>
+                    </controls:SettingRow>
+                    <Border Style="{StaticResource Divider}" />
+                    <controls:SettingRow Title="Загрузка: критическая">
+                        <controls:SettingRow.Detail>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <Slider Style="{StaticResource SettingsSlider}" Minimum="11" Maximum="100" TickFrequency="1"
+                                        Value="{Binding CritPercent}" AutomationProperties.Name="Порог критической загрузки" />
+                                <TextBlock Grid.Column="1" Style="{StaticResource ValueText}" Text="{Binding CritPercent, StringFormat={}{0} %}" />
+                            </Grid>
+                        </controls:SettingRow.Detail>
+                    </controls:SettingRow>
+                    <Border Style="{StaticResource Divider}" />
+                    <controls:SettingRow Title="Температура: высокая" Description="Температура видеокарты">
+                        <controls:SettingRow.Detail>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <Slider Style="{StaticResource SettingsSlider}" Minimum="30" Maximum="109" TickFrequency="1"
+                                        Value="{Binding WarnTemp}" AutomationProperties.Name="Порог высокой температуры" />
+                                <TextBlock Grid.Column="1" Style="{StaticResource ValueText}" Text="{Binding WarnTemp, StringFormat={}{0} °C}" />
+                            </Grid>
+                        </controls:SettingRow.Detail>
+                    </controls:SettingRow>
+                    <Border Style="{StaticResource Divider}" />
+                    <controls:SettingRow Title="Температура: критическая">
+                        <controls:SettingRow.Detail>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <Slider Style="{StaticResource SettingsSlider}" Minimum="31" Maximum="110" TickFrequency="1"
+                                        Value="{Binding CritTemp}" AutomationProperties.Name="Порог критической температуры" />
+                                <TextBlock Grid.Column="1" Style="{StaticResource ValueText}" Text="{Binding CritTemp, StringFormat={}{0} °C}" />
+                            </Grid>
+                        </controls:SettingRow.Detail>
+                    </controls:SettingRow>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <TextBlock Text="Мини-графики" Style="{StaticResource SectionTitle}" />
+        <Border Style="{StaticResource Card}">
+            <controls:SettingRow Glyph="&#xE9D2;" Title="История за последнюю минуту"
+                                 Description="Линия цвета подписи, последняя точка выделена. «Фоном» не делает оверлей шире">
+                <ComboBox Style="{StaticResource SettingsCombo}" ItemsSource="{Binding SparklineOptions}"
+                          SelectedValue="{Binding Sparklines}" />
+            </controls:SettingRow>
+        </Border>
+
+        <TextBlock Text="Текст и форма" Style="{StaticResource SectionTitle}" />
+        <Border Style="{StaticResource Card}">
+            <StackPanel>
+                <controls:SettingRow Glyph="&#xE8D2;" Title="Шрифт" Description="Segoe UI Variable — тот же, что у часов на панели задач">
+                    <ComboBox Style="{StaticResource SettingsCombo}" DisplayMemberPath="" SelectedValuePath=""
+                              ItemsSource="{Binding FontOptions}" SelectedItem="{Binding FontFamily}" />
+                </controls:SettingRow>
+                <Border Style="{StaticResource Divider}" />
+                <controls:SettingRow Title="Начертание">
+                    <ComboBox Style="{StaticResource SettingsCombo}" ItemsSource="{Binding FontWeightOptions}"
+                              SelectedValue="{Binding FontWeight}" />
+                </controls:SettingRow>
+                <Border Style="{StaticResource Divider}" />
+                <controls:SettingRow Glyph="&#xE9A6;" Title="Размер">
+                    <controls:SettingRow.Detail>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <Slider Style="{StaticResource SettingsSlider}" Minimum="80" Maximum="150" TickFrequency="5"
+                                    Value="{Binding ScalePercent}" AutomationProperties.Name="Размер оверлея" />
+                            <TextBlock Grid.Column="1" Style="{StaticResource ValueText}" Text="{Binding ScalePercent, StringFormat={}{0} %}" />
+                        </Grid>
+                    </controls:SettingRow.Detail>
+                </controls:SettingRow>
+                <Border Style="{StaticResource Divider}" />
+                <controls:SettingRow Title="Расстояние между колонками">
+                    <controls:SettingRow.Detail>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <Slider Style="{StaticResource SettingsSlider}" Minimum="0" Maximum="24" TickFrequency="1"
+                                    Value="{Binding ColumnSpacing}" AutomationProperties.Name="Расстояние между колонками" />
+                            <TextBlock Grid.Column="1" Style="{StaticResource ValueText}" Text="{Binding ColumnSpacing, StringFormat={}{0} px}" />
+                        </Grid>
+                    </controls:SettingRow.Detail>
+                </controls:SettingRow>
+                <Border Style="{StaticResource Divider}" />
+                <controls:SettingRow Glyph="&#xE81E;" Title="Подложки колонок" Description="Скруглённый фон под каждой колонкой, как у кнопок панели">
+                    <CheckBox Style="{StaticResource ToggleSwitch}" IsChecked="{Binding ShowPods}" />
+                </controls:SettingRow>
+                <Border Style="{StaticResource Divider}" />
+                <controls:SettingRow Title="Общий фон" Description="Плотная подложка под всем оверлеем — полезна в режиме «Свободно» поверх окон">
+                    <CheckBox Style="{StaticResource ToggleSwitch}" IsChecked="{Binding ShowBackground}" />
+                </controls:SettingRow>
+            </StackPanel>
+        </Border>
+
+        <Button Content="Сбросить оформление" Command="{Binding ResetAppearanceCommand}" HorizontalAlignment="Left" Margin="0,20,0,0" />
+    </StackPanel>
+</UserControl>

@@ -1,0 +1,88 @@
+<UserControl x:Class="TaskbarMonitor.Views.MetricsPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:TaskbarMonitor.Controls">
+    <UserControl.Resources>
+        <ResourceDictionary Source="/Themes/ControlStyles.xaml" />
+    </UserControl.Resources>
+
+    <StackPanel>
+        <TextBlock Text="Метрики" Style="{StaticResource PageTitle}" />
+        <TextBlock Style="{StaticResource PageSubtitle}"
+                   Text="Что показывать и в каком порядке. В режиме «две строки» соседние метрики встают в одну колонку: первая сверху, вторая снизу." />
+
+        <controls:OverlayPreview Margin="0,16,0,0" Surface="{Binding ActiveSurface}" />
+
+        <TextBlock Text="Показатели" Style="{StaticResource SectionTitle}" />
+        <Border Style="{StaticResource Card}">
+            <ItemsControl ItemsSource="{Binding Metrics}" Focusable="False">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel>
+                            <Border x:Name="Separator" Style="{StaticResource Divider}" />
+                            <controls:SettingRow Glyph="{Binding Glyph}" Title="{Binding Title}" Description="{Binding Description}">
+                                <StackPanel Orientation="Horizontal">
+                                    <Button Style="{StaticResource IconButton}" Content="&#xE70E;" Command="{Binding MoveUpCommand}"
+                                            IsEnabled="{Binding CanMoveUp}" ToolTip="Выше"
+                                            AutomationProperties.Name="{Binding Title, StringFormat={}{0}: переместить выше}" />
+                                    <Button Style="{StaticResource IconButton}" Content="&#xE70D;" Command="{Binding MoveDownCommand}"
+                                            IsEnabled="{Binding CanMoveDown}" ToolTip="Ниже" Margin="0,0,12,0"
+                                            AutomationProperties.Name="{Binding Title, StringFormat={}{0}: переместить ниже}" />
+                                    <CheckBox Style="{StaticResource ToggleSwitch}" IsChecked="{Binding Enabled}"
+                                              AutomationProperties.Name="{Binding Title}" />
+                                </StackPanel>
+                            </controls:SettingRow>
+                        </StackPanel>
+                        <DataTemplate.Triggers>
+                            <DataTrigger Binding="{Binding RelativeSource={RelativeSource PreviousData}}" Value="{x:Null}">
+                                <Setter TargetName="Separator" Property="Visibility" Value="Collapsed" />
+                            </DataTrigger>
+                        </DataTemplate.Triggers>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </Border>
+
+        <TextBlock Text="Источники данных" Style="{StaticResource SectionTitle}" />
+        <Border Style="{StaticResource Card}">
+            <StackPanel>
+                <controls:SettingRow Glyph="&#xE7FC;" Title="Видеокарта"
+                                     Description="Для NVIDIA данные берутся из драйвера (NVML), для остальных — из счётчиков Windows">
+                    <ComboBox Style="{StaticResource SettingsCombo}" ItemsSource="{Binding GpuOptions}"
+                              SelectedValue="{Binding GpuId}" />
+                </controls:SettingRow>
+                <Border Style="{StaticResource Divider}" />
+                <controls:SettingRow Glyph="&#xE839;" Title="Сетевой адаптер"
+                                     Description="«Все физические» не учитывают виртуальные адаптеры, чтобы трафик не считался дважды">
+                    <ComboBox Style="{StaticResource SettingsCombo}" ItemsSource="{Binding NetworkOptions}"
+                              SelectedValue="{Binding NetworkAdapter}" />
+                </controls:SettingRow>
+                <Border Style="{StaticResource Divider}" />
+                <controls:SettingRow Glyph="&#xEE94;" Title="Диск для заполненности">
+                    <ComboBox Style="{StaticResource SettingsCombo}" ItemsSource="{Binding DriveOptions}"
+                              SelectedValue="{Binding SpaceDrive}" />
+                </controls:SettingRow>
+                <Border Style="{StaticResource Divider}" />
+                <controls:SettingRow Title="Подключили новое устройство?"
+                                     Description="Обновите списки видеокарт, адаптеров и дисков">
+                    <Button Content="Обновить списки" Command="{Binding RefreshSourcesCommand}" MinWidth="140" />
+                </controls:SettingRow>
+            </StackPanel>
+        </Border>
+
+        <TextBlock Text="Вид" Style="{StaticResource SectionTitle}" />
+        <Border Style="{StaticResource Card}">
+            <StackPanel>
+                <controls:SettingRow Glyph="&#xE8A9;" Title="Раскладка">
+                    <ComboBox Style="{StaticResource SettingsCombo}" ItemsSource="{Binding RowOptions}"
+                              SelectedValue="{Binding TwoRows}" />
+                </controls:SettingRow>
+                <Border Style="{StaticResource Divider}" />
+                <controls:SettingRow Glyph="&#xE8D2;" Title="Подписи">
+                    <ComboBox Style="{StaticResource SettingsCombo}" ItemsSource="{Binding LabelStyleOptions}"
+                              SelectedValue="{Binding LabelStyle}" />
+                </controls:SettingRow>
+            </StackPanel>
+        </Border>
+    </StackPanel>
+</UserControl>

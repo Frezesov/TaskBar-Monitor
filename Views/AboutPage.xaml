@@ -1,0 +1,115 @@
+<UserControl x:Class="TaskbarMonitor.Views.AboutPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:TaskbarMonitor.Controls">
+    <StackPanel>
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Image Source="pack://application:,,,/Assets/app.ico" Width="56" Height="56" Margin="0,0,18,0"
+                   RenderOptions.BitmapScalingMode="HighQuality" />
+            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                <TextBlock Text="Монитор ресурсов" Style="{StaticResource PageTitle}" />
+                <TextBlock Style="{StaticResource PageSubtitle}" Text="{Binding Version, StringFormat=Версия {0}}" />
+            </StackPanel>
+        </Grid>
+
+        <TextBlock Text="Как подбирается цвет" Style="{StaticResource SectionTitle}" />
+        <Border Style="{StaticResource Card}" Padding="16,14">
+            <TextBlock Style="{StaticResource RowDescription}" Margin="0" FontSize="13" LineHeight="20">
+                Панель задач окрашивается по «режиму Windows», а не по «режиму приложений» — в особом режиме они различаются, поэтому программа смотрит именно на первый.
+                <LineBreak />
+                Из системной палитры акцента (семь оттенков) для тёмной панели берётся светлый оттенок, для светлой — тёмный, для акцентной — самый светлый.
+                Если выбранный оттенок читается хуже 4,5 : 1, берётся следующий. Смена темы или акцента применяется сразу, с плавным переходом.
+            </TextBlock>
+        </Border>
+
+        <TextBlock Text="Диагностика темы" Style="{StaticResource SectionTitle}" />
+        <Border Style="{StaticResource Card}" Padding="16,6">
+            <StackPanel>
+                <ItemsControl ItemsSource="{Binding Diagnostics}" Focusable="False">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Grid Margin="0,8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="{Binding Name}" FontSize="13" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                <Border Grid.Column="1" Width="14" Height="14" CornerRadius="3" Margin="0,0,8,0" BorderThickness="1"
+                                        VerticalAlignment="Center" Background="{Binding Color}"
+                                        BorderBrush="{DynamicResource ControlStrokeColorSecondaryBrush}">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Color}" Value="{x:Null}">
+                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                </Border>
+                                <TextBlock Grid.Column="2" Text="{Binding Value}" FontSize="13" FontWeight="Medium"
+                                           Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <TextBlock Text="Палитра акцента Windows" FontSize="13" Margin="0,10,0,8"
+                           Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                <ItemsControl ItemsSource="{Binding AccentSwatches}" Focusable="False" Margin="0,0,0,12">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <UniformGrid Rows="1" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Margin="0,0,6,0">
+                                <Border Height="28" CornerRadius="4" Background="{Binding Brush}" ToolTip="{Binding Hex}"
+                                        BorderThickness="1" BorderBrush="{DynamicResource ControlStrokeColorSecondaryBrush}" />
+                                <TextBlock Text="{Binding Name}" FontSize="11" Margin="0,4,0,0" HorizontalAlignment="Center"
+                                           Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+        </Border>
+
+        <TextBlock Text="Ограничения" Style="{StaticResource SectionTitle}" />
+        <Border Style="{StaticResource Card}" Padding="16,14">
+            <StackPanel>
+                <TextBlock Style="{StaticResource RowDescription}" Margin="0" FontSize="13" LineHeight="20"
+                           Text="• Температура процессора не показывается: без драйвера режима ядра Windows её не отдаёт, а такие драйверы (WinRing0) сейчас блокирует Защитник." />
+                <TextBlock Style="{StaticResource RowDescription}" Margin="0,6,0,0" FontSize="13" LineHeight="20"
+                           Text="• Windows 11 не даёт резервировать место на панели задач: если закреплённых значков очень много, оверлей может их перекрыть — сдвиньте его отступом." />
+                <TextBlock Style="{StaticResource RowDescription}" Margin="0,6,0,0" FontSize="13" LineHeight="20"
+                           Text="• Оверлей показывается на основной панели задач." />
+            </StackPanel>
+        </Border>
+
+        <TextBlock Text="Благодарности" Style="{StaticResource SectionTitle}" />
+        <Border Style="{StaticResource Card}">
+            <controls:SettingRow Glyph="&#xE71B;" Title="Kil0bit System Monitor"
+                                 Description="Идея, способ закрепления на панели задач и определение полноэкранных окон — из открытого проекта KB - kil0bit (лицензия MIT)">
+                <Button Command="{Binding OpenOriginalCommand}">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="GitHub" />
+                        <controls:Glyph Text="&#xE8A7;" FontFamily="{StaticResource IconFontFamily}" FontSize="12"
+                                        Margin="8,1,0,0" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+            </controls:SettingRow>
+        </Border>
+
+        <StackPanel Orientation="Horizontal" Margin="0,20,0,0">
+            <Button Content="Папка настроек" Command="{Binding OpenSettingsFolderCommand}" Margin="0,0,8,0" />
+            <Button Content="Журнал ошибок" Command="{Binding OpenErrorLogCommand}" />
+        </StackPanel>
+    </StackPanel>
+</UserControl>

@@ -1,0 +1,95 @@
+<UserControl x:Class="TaskbarMonitor.Views.GeneralPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:TaskbarMonitor.Controls">
+    <UserControl.Resources>
+        <ResourceDictionary Source="/Themes/ControlStyles.xaml" />
+    </UserControl.Resources>
+
+    <StackPanel>
+        <TextBlock Text="Общие" Style="{StaticResource PageTitle}" />
+        <TextBlock Style="{StaticResource PageSubtitle}"
+                   Text="Загрузка процессора, памяти и видеокарты прямо на панели задач. Цвета сами подстраиваются под светлую и тёмную тему Windows." />
+
+        <controls:OverlayPreview Margin="0,16,0,0" Surface="{Binding ActiveSurface}" />
+        <TextBlock Margin="2,8,0,0" Style="{StaticResource RowDescription}" Text="{Binding ThemeSummary}" />
+
+        <TextBlock Text="Оверлей" Style="{StaticResource SectionTitle}" />
+        <Border Style="{StaticResource Card}">
+            <StackPanel>
+                <controls:SettingRow Glyph="&#xE7F4;" Title="Показывать на панели задач"
+                                     Description="Если выключить, программа продолжит работать — вернуть оверлей можно здесь">
+                    <CheckBox Style="{StaticResource ToggleSwitch}" IsChecked="{Binding ShowOverlay}" />
+                </controls:SettingRow>
+                <Border Style="{StaticResource Divider}" />
+                <controls:SettingRow Glyph="&#xE7E8;" Title="Запускать вместе с Windows"
+                                     Description="Программа стартует без окна настроек. Чтобы открыть его, запустите программу ещё раз или нажмите правой кнопкой по оверлею">
+                    <CheckBox Style="{StaticResource ToggleSwitch}" IsChecked="{Binding Autostart}" />
+                </controls:SettingRow>
+            </StackPanel>
+        </Border>
+
+        <TextBlock Text="Положение" Style="{StaticResource SectionTitle}" />
+        <Border Style="{StaticResource Card}">
+            <StackPanel>
+                <controls:SettingRow Glyph="&#xE718;" Title="Привязать к панели задач"
+                                     Description="Оверлей встаёт поверх панели, повторяет её высоту и следует за ней. Если выключить — его можно поставить в любое место экрана">
+                    <CheckBox Style="{StaticResource ToggleSwitch}" IsChecked="{Binding SnapToTaskbar}" />
+                </controls:SettingRow>
+                <Border Style="{StaticResource Divider}" />
+                <controls:SettingRow Title="Расположение на панели" IsEnabled="{Binding SnapToTaskbar}"
+                                     Description="Слева от области уведомлений обычно свободно при значках по центру">
+                    <ComboBox Style="{StaticResource SettingsCombo}" ItemsSource="{Binding AnchorOptions}"
+                              SelectedValue="{Binding Anchor}" />
+                </controls:SettingRow>
+                <Border Style="{StaticResource Divider}" />
+                <controls:SettingRow Title="Отступ" IsEnabled="{Binding SnapToTaskbar}"
+                                     Description="Расстояние от выбранного края. Оверлей можно и просто перетащить мышью">
+                    <controls:SettingRow.Detail>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <Slider Style="{StaticResource SettingsSlider}" Minimum="0" Maximum="1600" TickFrequency="2"
+                                    SmallChange="2" LargeChange="40" Value="{Binding Offset}"
+                                    AutomationProperties.Name="Отступ от края" />
+                            <TextBlock Grid.Column="1" Style="{StaticResource ValueText}" Text="{Binding Offset, StringFormat={}{0} px}" />
+                        </Grid>
+                    </controls:SettingRow.Detail>
+                </controls:SettingRow>
+                <Border Style="{StaticResource Divider}" />
+                <controls:SettingRow Glyph="&#xE72E;" Title="Закрепить позицию"
+                                     Description="Защищает от случайного перетаскивания">
+                    <CheckBox Style="{StaticResource ToggleSwitch}" IsChecked="{Binding LockPosition}" />
+                </controls:SettingRow>
+            </StackPanel>
+        </Border>
+
+        <TextBlock Text="Поведение" Style="{StaticResource SectionTitle}" />
+        <Border Style="{StaticResource Card}">
+            <StackPanel>
+                <controls:SettingRow Glyph="&#xE8A7;" Title="Поверх всех окон"
+                                     Description="Оверлей не прячется за другими окнами, в том числе в режиме «Свободно»">
+                    <CheckBox Style="{StaticResource ToggleSwitch}" IsChecked="{Binding AlwaysOnTop}" />
+                </controls:SettingRow>
+                <Border Style="{StaticResource Divider}" />
+                <controls:SettingRow Glyph="&#xE740;" Title="Скрывать в полноэкранном режиме"
+                                     Description="Игры, видео и презентации на весь экран не будут перекрыты">
+                    <CheckBox Style="{StaticResource ToggleSwitch}" IsChecked="{Binding HideOnFullscreen}" />
+                </controls:SettingRow>
+                <Border Style="{StaticResource Divider}" />
+                <controls:SettingRow Glyph="&#xED5A;" Title="Частота обновления"
+                                     Description="Чем реже, тем меньше нагрузка на систему">
+                    <ComboBox Style="{StaticResource SettingsCombo}" ItemsSource="{Binding IntervalOptions}"
+                              SelectedValue="{Binding UpdateIntervalMs}" />
+                </controls:SettingRow>
+                <Border Style="{StaticResource Divider}" />
+                <controls:SettingRow Glyph="&#xE8B0;" Title="Двойной щелчок по оверлею">
+                    <ComboBox Style="{StaticResource SettingsCombo}" ItemsSource="{Binding DoubleClickOptions}"
+                              SelectedValue="{Binding DoubleClick}" />
+                </controls:SettingRow>
+            </StackPanel>
+        </Border>
+    </StackPanel>
+</UserControl>
