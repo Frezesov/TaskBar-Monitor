@@ -69,6 +69,10 @@ public sealed class AppSettings
     public bool ShowPods { get; set; } = true;
     public bool ShowBackground { get; set; }
 
+    public bool CheckForUpdates { get; set; } = true;
+    public DateTimeOffset? LastUpdateCheck { get; set; }
+    public string LatestVersion { get; set; } = "";
+
     public bool WelcomeShown { get; set; }
 
     public static List<MetricEntry> DefaultMetrics() =>

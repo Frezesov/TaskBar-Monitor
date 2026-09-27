@@ -16,6 +16,30 @@
             </StackPanel>
         </Grid>
 
+        <TextBlock Text="Обновления" Style="{StaticResource SectionTitle}" />
+        <Border Style="{StaticResource Card}">
+            <StackPanel>
+                <controls:SettingRow Glyph="&#xE895;" Title="{Binding UpdateTitle}" Description="{Binding UpdateDetail}">
+                    <StackPanel Orientation="Horizontal">
+                        <Button Command="{Binding DownloadUpdateCommand}" Style="{DynamicResource AccentButtonStyle}"
+                                Visibility="{Binding UpdateAvailable, Converter={StaticResource BoolToVisibility}}" Margin="0,0,8,0">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{Binding DownloadUpdateText}" />
+                                <controls:Glyph Text="&#xE8A7;" FontFamily="{StaticResource IconFontFamily}" FontSize="12"
+                                                Margin="8,1,0,0" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+                        <Button Content="Проверить" Command="{Binding CheckUpdatesCommand}" IsEnabled="{Binding CanCheckUpdates}" />
+                    </StackPanel>
+                </controls:SettingRow>
+                <Border Style="{StaticResource Divider}" />
+                <controls:SettingRow Title="Проверять автоматически"
+                                     Description="Раз в сутки программа спрашивает у GitHub, вышла ли новая версия. Скачивать или нет — решаете вы">
+                    <CheckBox Style="{StaticResource ToggleSwitch}" IsChecked="{Binding CheckForUpdates}" />
+                </controls:SettingRow>
+            </StackPanel>
+        </Border>
+
         <TextBlock Text="Как подбирается цвет" Style="{StaticResource SectionTitle}" />
         <Border Style="{StaticResource Card}" Padding="16,14">
             <TextBlock Style="{StaticResource RowDescription}" Margin="0" FontSize="13" LineHeight="20">

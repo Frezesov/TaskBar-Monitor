@@ -28,6 +28,11 @@ internal sealed class OverlayMenu
         _menu = new ContextMenu { DataContext = vm };
         _menu.Items.Add(new MenuItem { Header = "Настройки…", FontWeight = FontWeights.SemiBold, Command = vm.OpenSettingsCommand, Icon = Icon("") });
         _menu.Items.Add(new MenuItem { Header = "Диспетчер задач", Command = vm.OpenTaskManagerCommand, Icon = Icon("") });
+        var update = new MenuItem { Command = vm.DownloadUpdateCommand, Icon = Icon("") };
+        update.SetBinding(HeaderedItemsControl.HeaderProperty, nameof(SettingsViewModel.UpdateMenuText));
+        update.SetBinding(UIElement.VisibilityProperty,
+            new Binding(nameof(SettingsViewModel.UpdateAvailable)) { Converter = new BooleanToVisibilityConverter() });
+        _menu.Items.Add(update);
         _menu.Items.Add(new Separator());
         _menu.Items.Add(CheckItem("Поверх всех окон", nameof(SettingsViewModel.AlwaysOnTop)));
         _menu.Items.Add(CheckItem("Скрывать в полноэкранном режиме", nameof(SettingsViewModel.HideOnFullscreen)));

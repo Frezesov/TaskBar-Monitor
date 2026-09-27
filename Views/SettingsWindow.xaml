@@ -44,6 +44,24 @@
                                                 VerticalAlignment="Center" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
                                 <TextBlock Text="{Binding Title}" Margin="14,0,0,0" VerticalAlignment="Center"
                                            Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                                <!-- Update badge, like the dot Windows Settings puts on Windows Update -->
+                                <Ellipse Width="6" Height="6" Margin="10,1,0,0" VerticalAlignment="Center"
+                                         Fill="{DynamicResource AccentFillColorDefaultBrush}">
+                                    <Ellipse.Style>
+                                        <Style TargetType="Ellipse">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                            <Style.Triggers>
+                                                <MultiDataTrigger>
+                                                    <MultiDataTrigger.Conditions>
+                                                        <Condition Binding="{Binding ShowsUpdates}" Value="True" />
+                                                        <Condition Binding="{Binding DataContext.UpdateAvailable, RelativeSource={RelativeSource AncestorType=Window}}" Value="True" />
+                                                    </MultiDataTrigger.Conditions>
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                </MultiDataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Ellipse.Style>
+                                </Ellipse>
                             </StackPanel>
                         </DataTemplate>
                     </ListBox.ItemTemplate>

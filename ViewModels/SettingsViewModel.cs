@@ -1,7 +1,9 @@
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
+using System.Net.Http;
 using System.Runtime.CompilerServices;
+using System.Text.Json;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Threading;
@@ -16,16 +18,23 @@ public sealed record Swatch(string Name, SolidColorBrush Brush, string Hex);
 
 public sealed record DiagnosticRow(string Name, string Value, SolidColorBrush? Color = null);
 
+public enum UpdateState { Unknown, Checking, UpToDate, Available, Failed }
+
 public sealed class SettingsViewModel : ObservableObject, IDisposable
 {
+    private static readonly TimeSpan UpdateCheckInterval = TimeSpan.FromHours(20);
+
     private readonly AppSettings _s;
     private readonly SettingsStore _store;
     private readonly ThemeWatcher _theme;
     private readonly TelemetryService _telemetry;
     private readonly DispatcherTimer _saveTimer;
+    private readonly DispatcherTimer _updateTimer;
     private readonly Dispatcher _dispatcher;
     private bool _autostart;
     private bool _overlayChangePending;
+    private UpdateState _updateState;
+    private ReleaseInfo? _latest;
 
     public event Action? OverlayChanged;
     public event Action? SnapshotUpdated;
@@ -48,6 +57,17 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
             _store.Save(_s);
         };
 
+        // The first automatic check waits until startup is over, later ones look once an hour whether one is due.
+        _updateTimer = new DispatcherTimer(DispatcherPriority.Background) { Interval = TimeSpan.FromSeconds(15) };
+        _updateTimer.Tick += (_, _) =>
+        {
+            _updateTimer.Interval = TimeSpan.FromHours(1);
+            if (_s.CheckForUpdates && IsUpdateCheckDue)
+                _ = CheckUpdatesAsync(automatic: true);
+        };
+        _updateTimer.Start();
+        RestoreUpdateState();
+
         Metrics = new ObservableCollection<MetricItemViewModel>(
             _s.Metrics.Select(m => new MetricItemViewModel(m, OnMetricsChanged, MoveMetric)));
         UpdateMoveFlags();
@@ -61,6 +81,8 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
         OpenColorSettingsCommand = new RelayCommand(() => OpenPath("ms-settings:colors"));
         ResetAppearanceCommand = new RelayCommand(ResetAppearance);
         RefreshSourcesCommand = new RelayCommand(RefreshSources);
+        CheckUpdatesCommand = new RelayCommand(() => _ = CheckUpdatesAsync(automatic: false));
+        DownloadUpdateCommand = new RelayCommand(() => OpenPath(_latest?.Url ?? UpdateChecker.ReleasesPage));
 
         FontOptions = OverlayFonts.Available();
         RefreshSources();
@@ -81,8 +103,10 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
     public RelayCommand OpenColorSettingsCommand { get; }
     public RelayCommand ResetAppearanceCommand { get; }
     public RelayCommand RefreshSourcesCommand { get; }
+    public RelayCommand CheckUpdatesCommand { get; }
+    public RelayCommand DownloadUpdateCommand { get; }
 
-    public string Version { get; } = typeof(SettingsViewModel).Assembly.GetName().Version?.ToString(3) ?? "1.0.0";
+    public string Version { get; } = UpdateChecker.Current.ToString(3);
 
     public MetricsSnapshot Snapshot { get; private set; }
 
@@ -616,6 +640,112 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
         return brush;
     }
 
+    public bool CheckForUpdates
+    {
+        get => _s.CheckForUpdates;
+        set
+        {
+            if (_s.CheckForUpdates == value)
+                return;
+            _s.CheckForUpdates = value;
+            OnPropertyChanged();
+            ScheduleSave();
+            if (value && IsUpdateCheckDue)
+                _ = CheckUpdatesAsync(automatic: true);
+        }
+    }
+
+    public bool UpdateAvailable => _updateState == UpdateState.Available && _latest is not null;
+
+    public bool CanCheckUpdates => _updateState != UpdateState.Checking;
+
+    public string UpdateTitle => _updateState switch
+    {
+        UpdateState.Checking => "Проверяю обновления…",
+        UpdateState.Available when _latest is not null => $"Доступна версия {_latest.Version.ToString(3)}",
+        UpdateState.UpToDate => "Установлена последняя версия",
+        UpdateState.Failed => "Не удалось проверить обновления",
+        _ => "Проверка обновлений",
+    };
+
+    public string UpdateDetail => _updateState switch
+    {
+        UpdateState.Available => "Откроется страница выпуска на GitHub: скачайте новый exe и замените им старый",
+        UpdateState.Failed => "Нет связи с GitHub. Проверьте подключение к интернету и попробуйте ещё раз",
+        _ => _s.LastUpdateCheck is { } last ? $"Последняя проверка: {FormatWhen(last)}" : "Ещё не проверялось",
+    };
+
+    public string DownloadUpdateText => _latest is null ? "Скачать" : $"Скачать {_latest.Version.ToString(3)}";
+
+    public string UpdateMenuText => _latest is null ? "Доступно обновление…" : $"Доступно обновление {_latest.Version.ToString(3)}…";
+
+    private bool IsUpdateCheckDue => _s.LastUpdateCheck is not { } last || DateTimeOffset.Now - last > UpdateCheckInterval;
+
+    // What the last check found survives restarts, so a found update is shown right away.
+    private void RestoreUpdateState()
+    {
+        if (!UpdateChecker.TryParseVersion(_s.LatestVersion, out var known) || _s.LastUpdateCheck is null)
+            return;
+        if (known > UpdateChecker.Current)
+        {
+            _latest = new ReleaseInfo(known, UpdateChecker.ReleasePage(known));
+            _updateState = UpdateState.Available;
+        }
+        else
+        {
+            _updateState = UpdateState.UpToDate;
+        }
+    }
+
+    private async Task CheckUpdatesAsync(bool automatic)
+    {
+        if (_updateState == UpdateState.Checking)
+            return;
+        var previous = _updateState;
+        SetUpdateState(UpdateState.Checking);
+        try
+        {
+            var latest = await UpdateChecker.GetLatestAsync(CancellationToken.None);
+            _latest = latest;
+            _s.LastUpdateCheck = DateTimeOffset.Now;
+            _s.LatestVersion = latest.Version.ToString(3);
+            ScheduleSave();
+            SetUpdateState(latest.Version > UpdateChecker.Current ? UpdateState.Available : UpdateState.UpToDate);
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
+        {
+            // Being offline is normal for a background check: keep what is known and try again later.
+            SetUpdateState(automatic && previous != UpdateState.Unknown ? previous : UpdateState.Failed);
+        }
+        catch (Exception ex) when (ex is JsonException or FormatException or KeyNotFoundException or InvalidOperationException)
+        {
+            ErrorLog.Write(ex);
+            SetUpdateState(automatic && previous != UpdateState.Unknown ? previous : UpdateState.Failed);
+        }
+    }
+
+    private void SetUpdateState(UpdateState state)
+    {
+        _updateState = state;
+        OnPropertyChanged(nameof(UpdateAvailable));
+        OnPropertyChanged(nameof(CanCheckUpdates));
+        OnPropertyChanged(nameof(UpdateTitle));
+        OnPropertyChanged(nameof(UpdateDetail));
+        OnPropertyChanged(nameof(DownloadUpdateText));
+        OnPropertyChanged(nameof(UpdateMenuText));
+    }
+
+    private static string FormatWhen(DateTimeOffset when)
+    {
+        var local = when.ToLocalTime();
+        var today = DateTime.Today;
+        if (local.Date == today)
+            return $"сегодня в {local:HH:mm}";
+        if (local.Date == today.AddDays(-1))
+            return $"вчера в {local:HH:mm}";
+        return local.ToString("d MMMM yyyy", new System.Globalization.CultureInfo("ru-RU"));
+    }
+
     internal bool WelcomeShown => _s.WelcomeShown;
 
     internal void MarkWelcomeShown()
@@ -693,6 +823,7 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
     {
         _theme.Changed -= OnThemeChanged;
         _telemetry.Updated -= OnTelemetryUpdated;
+        _updateTimer.Stop();
         if (_saveTimer.IsEnabled)
         {
             _saveTimer.Stop();

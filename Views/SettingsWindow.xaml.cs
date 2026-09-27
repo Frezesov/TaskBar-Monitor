@@ -12,11 +12,12 @@ namespace TaskbarMonitor.Views;
 public partial class SettingsWindow : Window
 {
     // ListBox items must keep reference equality: Page is assigned later and must not change the item's hash.
-    private sealed class NavEntry(string glyph, string title, Func<UserControl> create)
+    private sealed class NavEntry(string glyph, string title, Func<UserControl> create, bool showsUpdates = false)
     {
         public string Glyph { get; } = glyph;
         public string Title { get; } = title;
         public Func<UserControl> Create { get; } = create;
+        public bool ShowsUpdates { get; } = showsUpdates;
         public UserControl? Page { get; set; }
 
         // Screen readers announce list items by their text.
@@ -28,7 +29,7 @@ public partial class SettingsWindow : Window
         new("", "Общие", () => new GeneralPage()),
         new("", "Метрики", () => new MetricsPage()),
         new("", "Оформление", () => new AppearancePage()),
-        new("", "О программе", () => new AboutPage()),
+        new("", "О программе", () => new AboutPage(), showsUpdates: true),
     ];
 
     private int _navigation;
