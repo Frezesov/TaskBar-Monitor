@@ -11,7 +11,7 @@
             <Image Source="pack://application:,,,/Assets/app.ico" Width="56" Height="56" Margin="0,0,18,0"
                    RenderOptions.BitmapScalingMode="HighQuality" />
             <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                <TextBlock Text="Монитор ресурсов" Style="{StaticResource PageTitle}" />
+                <TextBlock Text="TaskBar Monitor" Style="{StaticResource PageTitle}" />
                 <TextBlock Style="{StaticResource PageSubtitle}" Text="{Binding Version, StringFormat=Версия {0}}" />
             </StackPanel>
         </Grid>

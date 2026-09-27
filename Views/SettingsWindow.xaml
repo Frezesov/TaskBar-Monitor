@@ -2,7 +2,7 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:controls="clr-namespace:TaskbarMonitor.Controls"
-        Title="Монитор ресурсов"
+        Title="TaskBar Monitor"
         Icon="pack://application:,,,/Assets/app.ico"
         Width="1000" Height="780" MinWidth="760" MinHeight="520"
         WindowStartupLocation="CenterScreen"
@@ -16,14 +16,7 @@
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
 
-        <DockPanel Margin="12,14,10,14">
-            <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="12,2,0,22">
-                <Image Source="pack://application:,,,/Assets/app.ico" Width="20" Height="20"
-                       RenderOptions.BitmapScalingMode="HighQuality" />
-                <TextBlock Text="Монитор ресурсов" Margin="12,0,0,1" FontSize="13" VerticalAlignment="Center"
-                           Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
-            </StackPanel>
-
+        <DockPanel Margin="12,20,10,14">
             <StackPanel DockPanel.Dock="Bottom">
                 <Border Height="1" Margin="4,8,4,8" Background="{DynamicResource DividerStrokeColorDefaultBrush}" />
                 <Button Command="{Binding ExitCommand}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"

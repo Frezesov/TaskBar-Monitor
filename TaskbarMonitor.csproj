@@ -19,8 +19,8 @@
     <DisableTransitiveFrameworkReferenceDownloads>true</DisableTransitiveFrameworkReferenceDownloads>
     <NuGetAudit>false</NuGetAudit>
     <Version>1.0.0</Version>
-    <Product>Монитор ресурсов</Product>
-    <AssemblyTitle>Монитор ресурсов</AssemblyTitle>
+    <Product>TaskBar Monitor</Product>
+    <AssemblyTitle>TaskBar Monitor</AssemblyTitle>
     <Description>Загрузка процессора, памяти и видеокарты на панели задач</Description>
     <Copyright>Идея — Kil0bit System Monitor (MIT)</Copyright>
     <NeutralLanguage>ru-RU</NeutralLanguage>

@@ -1,4 +1,4 @@
-Монитор ресурсов includes ideas and adapted logic from the following project.
+TaskBar Monitor includes ideas and adapted logic from the following project.
 
 Kil0bit System Monitor — https://github.com/kil0bit-kb/kil0bit-system-monitor
 Used for: attaching the overlay to the taskbar (owner window + app bar notifications)

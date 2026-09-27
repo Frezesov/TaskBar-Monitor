@@ -44,7 +44,7 @@ internal sealed class OverlayWindow : Window
         _menu = new OverlayMenu(vm);
         _winEventProc = OnWinEvent;
 
-        Title = "Монитор ресурсов — оверлей";
+        Title = "TaskBar Monitor — оверлей";
         WindowStyle = WindowStyle.None;
         AllowsTransparency = true;
         Background = Brushes.Transparent;
