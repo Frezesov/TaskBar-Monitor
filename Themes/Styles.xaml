@@ -290,27 +290,22 @@
         </Setter>
     </Style>
 
-    <!-- Left navigation, modeled on NavigationView -->
+    <!-- Left navigation, modeled on NavigationView; the selection pill lives in SettingsWindow -->
     <Style x:Key="NavItem" TargetType="ListBoxItem">
         <Setter Property="Cursor" Value="Hand" />
         <Setter Property="FocusVisualStyle" Value="{StaticResource FocusRing}" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="ListBoxItem">
-                    <Grid Margin="0,2">
-                        <Border x:Name="Bg" CornerRadius="4" Background="Transparent" Padding="14,9,12,9">
-                            <ContentPresenter />
-                        </Border>
-                        <Border x:Name="Pill" Width="3" Height="16" CornerRadius="1.5" HorizontalAlignment="Left"
-                                Background="{DynamicResource AccentFillColorDefaultBrush}" Visibility="Collapsed" />
-                    </Grid>
+                    <Border x:Name="Bg" Margin="0,2" CornerRadius="4" Background="Transparent" Padding="14,9,12,9">
+                        <ContentPresenter />
+                    </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="Bg" Property="Background" Value="{DynamicResource SubtleFillColorSecondaryBrush}" />
                         </Trigger>
                         <Trigger Property="IsSelected" Value="True">
                             <Setter TargetName="Bg" Property="Background" Value="{DynamicResource SubtleFillColorSecondaryBrush}" />
-                            <Setter TargetName="Pill" Property="Visibility" Value="Visible" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>

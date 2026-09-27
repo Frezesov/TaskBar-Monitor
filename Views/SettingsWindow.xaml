@@ -30,33 +30,52 @@
                 </Button>
             </StackPanel>
 
-            <ListBox x:Name="Nav" ItemContainerStyle="{StaticResource NavItem}"
-                     Background="Transparent" BorderThickness="0" Padding="0"
-                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                     KeyboardNavigation.TabNavigation="Once"
-                     AutomationProperties.Name="Разделы настроек"
-                     SelectionChanged="OnNavigate">
-                <ListBox.ItemTemplate>
-                    <DataTemplate>
-                        <StackPanel Orientation="Horizontal">
-                            <controls:Glyph Text="{Binding Glyph}" FontFamily="{StaticResource IconFontFamily}" FontSize="16"
-                                            VerticalAlignment="Center" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
-                            <TextBlock Text="{Binding Title}" Margin="14,0,0,0" VerticalAlignment="Center"
-                                       Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
-                        </StackPanel>
-                    </DataTemplate>
-                </ListBox.ItemTemplate>
-            </ListBox>
+            <Grid x:Name="NavLayer">
+                <ListBox x:Name="Nav" ItemContainerStyle="{StaticResource NavItem}"
+                         Background="Transparent" BorderThickness="0" Padding="0"
+                         ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                         KeyboardNavigation.TabNavigation="Once"
+                         AutomationProperties.Name="Разделы настроек"
+                         SelectionChanged="OnNavigate">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal">
+                                <controls:Glyph Text="{Binding Glyph}" FontFamily="{StaticResource IconFontFamily}" FontSize="16"
+                                                VerticalAlignment="Center" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                                <TextBlock Text="{Binding Title}" Margin="14,0,0,0" VerticalAlignment="Center"
+                                           Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+
+                <!-- One selection pill for the whole list, so it can travel between items -->
+                <Canvas IsHitTestVisible="False">
+                    <Border x:Name="NavIndicator" Width="3" Height="16" CornerRadius="1.5" Visibility="Hidden"
+                            Background="{DynamicResource AccentFillColorDefaultBrush}">
+                        <Border.RenderTransform>
+                            <TransformGroup>
+                                <ScaleTransform x:Name="IndicatorStretch" CenterY="8" />
+                                <TranslateTransform x:Name="IndicatorShift" />
+                            </TransformGroup>
+                        </Border.RenderTransform>
+                    </Border>
+                </Canvas>
+            </Grid>
         </DockPanel>
 
         <!-- Content layer, like the Windows Settings app -->
         <Border Grid.Column="1" CornerRadius="8,0,0,0" BorderThickness="1,1,0,0"
                 Background="{DynamicResource LayerFillColorDefaultBrush}"
                 BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}">
-            <ScrollViewer x:Name="Scroller" VerticalScrollBarVisibility="Auto" Focusable="False">
+            <controls:SmoothScrollViewer x:Name="Scroller" VerticalScrollBarVisibility="Auto" Focusable="False">
                 <ContentControl x:Name="PageHost" Margin="{StaticResource PagePadding}" MaxWidth="860"
-                                Focusable="False" IsTabStop="False" />
-            </ScrollViewer>
+                                Focusable="False" IsTabStop="False">
+                    <ContentControl.RenderTransform>
+                        <TranslateTransform x:Name="PageShift" />
+                    </ContentControl.RenderTransform>
+                </ContentControl>
+            </controls:SmoothScrollViewer>
         </Border>
     </Grid>
 </Window>
