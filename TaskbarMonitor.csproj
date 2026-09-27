@@ -18,7 +18,7 @@
     <EnableSingleFileAnalyzer>false</EnableSingleFileAnalyzer>
     <DisableTransitiveFrameworkReferenceDownloads>true</DisableTransitiveFrameworkReferenceDownloads>
     <NuGetAudit>false</NuGetAudit>
-    <Version>1.0.0</Version>
+    <Version>1.1.0</Version>
     <Product>TaskBar Monitor</Product>
     <AssemblyTitle>TaskBar Monitor</AssemblyTitle>
     <Description>Загрузка процессора, памяти и видеокарты на панели задач</Description>
