@@ -22,6 +22,19 @@
                     <CheckBox Style="{StaticResource ToggleSwitch}" IsChecked="{Binding ShowOverlay}" />
                 </controls:SettingRow>
                 <Border Style="{StaticResource Divider}" />
+                <controls:SettingRow Glyph="&#xE765;" Title="Горячая клавиша"
+                                     Description="Показывает и прячет оверлей из любой программы. Щёлкните по сочетанию, чтобы задать своё">
+                    <CheckBox Style="{StaticResource ToggleSwitch}" IsChecked="{Binding HotkeyEnabled}" />
+                    <controls:SettingRow.Detail>
+                        <StackPanel IsEnabled="{Binding HotkeyEnabled}">
+                            <controls:HotkeyBox HorizontalAlignment="Left" Gesture="{Binding Hotkey}"
+                                                IsCapturing="{Binding IsCapturingHotkey}" />
+                            <TextBlock Style="{StaticResource RowDescription}" Margin="0,6,0,0" Text="{Binding HotkeyError}"
+                                       Foreground="{DynamicResource SystemFillColorCriticalBrush}" />
+                        </StackPanel>
+                    </controls:SettingRow.Detail>
+                </controls:SettingRow>
+                <Border Style="{StaticResource Divider}" />
                 <controls:SettingRow Glyph="&#xE7E8;" Title="Запускать вместе с Windows"
                                      Description="Программа стартует без окна настроек. Чтобы открыть его, запустите программу ещё раз или нажмите правой кнопкой по оверлею">
                     <CheckBox Style="{StaticResource ToggleSwitch}" IsChecked="{Binding Autostart}" />

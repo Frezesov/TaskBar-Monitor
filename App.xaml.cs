@@ -14,6 +14,7 @@ public partial class App : Application
     private SingleInstance? _instance;
     private ThemeWatcher? _theme;
     private TelemetryService? _telemetry;
+    private GlobalHotkey? _hotkey;
     private SettingsViewModel? _vm;
     private OverlayWindow? _overlay;
     private SettingsWindow? _window;
@@ -51,7 +52,8 @@ public partial class App : Application
         var settings = store.Load();
         _theme = new ThemeWatcher();
         _telemetry = new TelemetryService(new TelemetryOptions(new HashSet<MetricKind>(), "", "", "C:\\", settings.UpdateIntervalMs));
-        _vm = new SettingsViewModel(settings, store, _theme, _telemetry);
+        _hotkey = new GlobalHotkey();
+        _vm = new SettingsViewModel(settings, store, _theme, _telemetry, _hotkey);
         _vm.OpenSettingsRequested += ShowSettings;
         _vm.ExitRequested += ExitApp;
         _telemetry.Configure(_vm.TelemetryOptions);
@@ -102,6 +104,7 @@ public partial class App : Application
     protected override void OnExit(ExitEventArgs e)
     {
         _vm?.Dispose();
+        _hotkey?.Dispose();
         _telemetry?.Dispose();
         _theme?.Dispose();
         _instance?.Dispose();

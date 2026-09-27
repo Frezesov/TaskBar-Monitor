@@ -42,6 +42,8 @@ public sealed class AppSettings
     public int UpdateIntervalMs { get; set; } = 1000;
     public DoubleClickAction DoubleClick { get; set; } = DoubleClickAction.TaskManager;
     public bool ShowTooltip { get; set; } = true;
+    public bool HotkeyEnabled { get; set; }
+    public string Hotkey { get; set; } = HotkeyGesture.Default.ToString();
 
     public List<MetricEntry> Metrics { get; set; } = DefaultMetrics();
     public string GpuId { get; set; } = "";
@@ -107,6 +109,8 @@ public sealed class AppSettings
         ColumnSpacing = Math.Clamp(ColumnSpacing, 0, 24);
         if (string.IsNullOrWhiteSpace(FontFamily))
             FontFamily = OverlayFonts.Default;
+        if (!HotkeyGesture.TryParse(Hotkey, out _))
+            Hotkey = HotkeyGesture.Default.ToString();
     }
 }
 

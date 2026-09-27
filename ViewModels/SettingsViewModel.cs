@@ -28,12 +28,15 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
     private readonly SettingsStore _store;
     private readonly ThemeWatcher _theme;
     private readonly TelemetryService _telemetry;
+    private readonly GlobalHotkey _hotkey;
     private readonly DispatcherTimer _saveTimer;
     private readonly DispatcherTimer _updateTimer;
     private readonly Dispatcher _dispatcher;
     private bool _autostart;
     private bool _overlayChangePending;
     private UpdateState _updateState;
+    private bool _capturingHotkey;
+    private string _hotkeyError = "";
     private ReleaseInfo? _latest;
 
     public event Action? OverlayChanged;
@@ -41,12 +44,13 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
     public event Action? OpenSettingsRequested;
     public event Action? ExitRequested;
 
-    internal SettingsViewModel(AppSettings settings, SettingsStore store, ThemeWatcher theme, TelemetryService telemetry)
+    internal SettingsViewModel(AppSettings settings, SettingsStore store, ThemeWatcher theme, TelemetryService telemetry, GlobalHotkey hotkey)
     {
         _s = settings;
         _store = store;
         _theme = theme;
         _telemetry = telemetry;
+        _hotkey = hotkey;
         _dispatcher = Dispatcher.CurrentDispatcher;
         _autostart = AutostartService.IsEnabled;
 
@@ -89,6 +93,8 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
 
         _theme.Changed += OnThemeChanged;
         _telemetry.Updated += OnTelemetryUpdated;
+        _hotkey.Pressed += OnHotkeyPressed;
+        ApplyHotkey();
         Snapshot = MetricLayout.DemoSnapshot();
     }
 
@@ -233,6 +239,73 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
         get => _s.DoubleClick;
         set => Update(_s.DoubleClick, value, v => _s.DoubleClick = v);
     }
+
+    public bool HotkeyEnabled
+    {
+        get => _s.HotkeyEnabled;
+        set
+        {
+            if (_s.HotkeyEnabled == value)
+                return;
+            _s.HotkeyEnabled = value;
+            OnPropertyChanged();
+            ScheduleSave();
+            ApplyHotkey();
+        }
+    }
+
+    public HotkeyGesture Hotkey
+    {
+        get => HotkeyGesture.TryParse(_s.Hotkey, out var gesture) ? gesture : HotkeyGesture.Default;
+        set
+        {
+            if (!value.IsValid || value == Hotkey)
+                return;
+            _s.Hotkey = value.ToString();
+            OnPropertyChanged();
+            ScheduleSave();
+            ApplyHotkey();
+        }
+    }
+
+    /// <summary>True while a new combination is being recorded: the old one must not fire meanwhile.</summary>
+    public bool IsCapturingHotkey
+    {
+        get => _capturingHotkey;
+        set
+        {
+            if (_capturingHotkey == value)
+                return;
+            _capturingHotkey = value;
+            OnPropertyChanged();
+            ApplyHotkey();
+        }
+    }
+
+    public string HotkeyError
+    {
+        get => _hotkeyError;
+        private set
+        {
+            if (_hotkeyError == value)
+                return;
+            _hotkeyError = value;
+            OnPropertyChanged();
+        }
+    }
+
+    private void ApplyHotkey()
+    {
+        if (!_s.HotkeyEnabled || _capturingHotkey)
+        {
+            _hotkey.Unregister();
+            HotkeyError = "";
+            return;
+        }
+        HotkeyError = _hotkey.Register(Hotkey) ? "" : "Это сочетание уже занято другой программой — выберите другое";
+    }
+
+    private void OnHotkeyPressed() => ShowOverlay = !ShowOverlay;
 
     public bool ShowTooltip
     {
@@ -832,6 +905,7 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
     {
         _theme.Changed -= OnThemeChanged;
         _telemetry.Updated -= OnTelemetryUpdated;
+        _hotkey.Pressed -= OnHotkeyPressed;
         _updateTimer.Stop();
         if (_saveTimer.IsEnabled)
         {
