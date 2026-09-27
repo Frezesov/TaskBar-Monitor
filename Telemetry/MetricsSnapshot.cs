@@ -23,6 +23,13 @@ public sealed class MetricsSnapshot
 
     public double RamUsedGb { get; init; } = double.NaN;
     public double RamTotalGb { get; init; } = double.NaN;
+    public double VramUsedGb { get; init; } = double.NaN;
+    public double VramTotalGb { get; init; } = double.NaN;
+    public double DiskFreeGb { get; init; } = double.NaN;
+    public double DiskTotalGb { get; init; } = double.NaN;
+
+    /// <summary>Busiest processes by CPU; null unless someone asked for them (see TelemetryService.SetProcessSampling).</summary>
+    public IReadOnlyList<ProcessLoad>? TopProcesses { get; init; }
     public string GpuName { get; init; } = "";
     public string GpuSource { get; init; } = "";
 

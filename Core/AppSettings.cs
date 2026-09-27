@@ -41,6 +41,7 @@ public sealed class AppSettings
     public bool HideOnFullscreen { get; set; } = true;
     public int UpdateIntervalMs { get; set; } = 1000;
     public DoubleClickAction DoubleClick { get; set; } = DoubleClickAction.TaskManager;
+    public bool ShowTooltip { get; set; } = true;
 
     public List<MetricEntry> Metrics { get; set; } = DefaultMetrics();
     public string GpuId { get; set; } = "";

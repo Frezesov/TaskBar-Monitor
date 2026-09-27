@@ -14,6 +14,8 @@ internal sealed class TelemetryService : IDisposable
 {
     public const int HistoryLength = 60;
 
+    private const double Gb = 1073741824.0;
+
     [StructLayout(LayoutKind.Sequential)]
     private struct MemoryStatusEx
     {
@@ -35,6 +37,7 @@ internal sealed class TelemetryService : IDisposable
     private readonly CancellationTokenSource _cts = new();
     private readonly History[] _history = Enumerable.Range(0, MetricsSnapshot.KindCount).Select(_ => new History(HistoryLength)).ToArray();
     private readonly NetworkSampler _network = new();
+    private readonly ProcessSampler _processes = new();
     private readonly Dictionary<string, double> _engineSums = new(StringComparer.Ordinal);
     private readonly Lock _gate = new();
 
@@ -52,6 +55,7 @@ internal sealed class TelemetryService : IDisposable
     private bool _nvmlTried;
     private IntPtr _nvmlDevice;
     private D3dkmtAdapter? _d3dkmt;
+    private volatile bool _sampleProcesses;
 
     public TelemetryService(TelemetryOptions options) => _options = options;
 
@@ -69,6 +73,9 @@ internal sealed class TelemetryService : IDisposable
             _reconfigure = true;
         }
     }
+
+    /// <summary>Turns the per-process CPU list on while something shows it; it costs a system-wide query per tick.</summary>
+    public void SetProcessSampling(bool on) => _sampleProcesses = on;
 
     private async Task RunAsync(CancellationToken token)
     {
@@ -177,6 +184,7 @@ internal sealed class TelemetryService : IDisposable
         }
 
         string gpuSource = "";
+        double vramUsed = double.NaN, vramTotal = double.NaN;
         if (_gpu is not null)
         {
             if (on.Contains(MetricKind.Gpu))
@@ -184,7 +192,7 @@ internal sealed class TelemetryService : IDisposable
             if (on.Contains(MetricKind.GpuTemp))
                 values[(int)MetricKind.GpuTemp] = _nvmlDevice != IntPtr.Zero ? _nvml!.Temperature(_nvmlDevice) : _d3dkmt?.Temperature() ?? double.NaN;
             if (on.Contains(MetricKind.Vram))
-                values[(int)MetricKind.Vram] = VramPercent(_gpu);
+                (values[(int)MetricKind.Vram], vramUsed, vramTotal) = Vram(_gpu);
             gpuSource = _nvmlDevice != IntPtr.Zero ? "NVML" : "PDH / D3DKMT";
         }
 
@@ -210,8 +218,15 @@ internal sealed class TelemetryService : IDisposable
             values[(int)MetricKind.DiskActivity] = busiest;
         }
 
+        double diskFree = double.NaN, diskTotal = double.NaN;
         if (on.Contains(MetricKind.DiskSpace))
-            values[(int)MetricKind.DiskSpace] = DiskSpacePercent(options.SpaceDrive);
+            (values[(int)MetricKind.DiskSpace], diskFree, diskTotal) = DiskSpace(options.SpaceDrive);
+
+        IReadOnlyList<ProcessLoad>? top = null;
+        if (_sampleProcesses)
+            top = _processes.Sample(3);
+        else
+            _processes.Reset();
 
         var history = new double[MetricsSnapshot.KindCount][];
         for (int i = 0; i < values.Length; i++)
@@ -224,6 +239,11 @@ internal sealed class TelemetryService : IDisposable
         {
             RamUsedGb = ramUsed,
             RamTotalGb = ramTotal,
+            VramUsedGb = vramUsed,
+            VramTotalGb = vramTotal,
+            DiskFreeGb = diskFree,
+            DiskTotalGb = diskTotal,
+            TopProcesses = top,
             GpuName = _gpu?.Name ?? "",
             GpuSource = gpuSource,
         };
@@ -250,36 +270,42 @@ internal sealed class TelemetryService : IDisposable
         return _engineSums.Count == 0 ? 0 : Clamp(_engineSums.Values.Max());
     }
 
-    private double VramPercent(GpuAdapter gpu)
+    private (double Percent, double UsedGb, double TotalGb) Vram(GpuAdapter gpu)
     {
+        double used, total;
         if (_nvmlDevice != IntPtr.Zero)
         {
-            var (used, total) = _nvml!.MemoryInfo(_nvmlDevice);
-            return total > 0 ? Clamp(100 * used / total) : double.NaN;
+            (used, total) = _nvml!.MemoryInfo(_nvmlDevice);
         }
-        if (_pdh is null || _gpuMemoryCounter == IntPtr.Zero || gpu.DedicatedMemory == 0)
-            return double.NaN;
-        double used2 = double.NaN;
-        _pdh.ReadArray(_gpuMemoryCounter, (name, value) =>
+        else
         {
-            if (name.Contains(gpu.Id, StringComparison.OrdinalIgnoreCase))
-                used2 = double.IsNaN(used2) ? value : used2 + value;
-        });
-        return double.IsNaN(used2) ? double.NaN : Clamp(100 * used2 / gpu.DedicatedMemory);
+            if (_pdh is null || _gpuMemoryCounter == IntPtr.Zero || gpu.DedicatedMemory == 0)
+                return (double.NaN, double.NaN, double.NaN);
+            double sum = double.NaN;
+            _pdh.ReadArray(_gpuMemoryCounter, (name, value) =>
+            {
+                if (name.Contains(gpu.Id, StringComparison.OrdinalIgnoreCase))
+                    sum = double.IsNaN(sum) ? value : sum + value;
+            });
+            (used, total) = (sum, gpu.DedicatedMemory);
+        }
+        return double.IsNaN(used) || !(total > 0)
+            ? (double.NaN, double.NaN, double.NaN)
+            : (Clamp(100 * used / total), used / Gb, total / Gb);
     }
 
-    private static double DiskSpacePercent(string drive)
+    private static (double Percent, double FreeGb, double TotalGb) DiskSpace(string drive)
     {
         try
         {
             var info = new DriveInfo(string.IsNullOrWhiteSpace(drive) ? "C:\\" : drive);
             return info.IsReady && info.TotalSize > 0
-                ? 100.0 * (info.TotalSize - info.TotalFreeSpace) / info.TotalSize
-                : double.NaN;
+                ? (100.0 * (info.TotalSize - info.TotalFreeSpace) / info.TotalSize, info.TotalFreeSpace / Gb, info.TotalSize / Gb)
+                : (double.NaN, double.NaN, double.NaN);
         }
         catch (Exception ex) when (ex is IOException or ArgumentException or UnauthorizedAccessException)
         {
-            return double.NaN;
+            return (double.NaN, double.NaN, double.NaN);
         }
     }
 
@@ -299,6 +325,7 @@ internal sealed class TelemetryService : IDisposable
         _d3dkmt?.Dispose();
         _nvml?.Dispose();
         _network.Dispose();
+        _processes.Dispose();
         _cts.Dispose();
     }
 }

@@ -234,6 +234,15 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
         set => Update(_s.DoubleClick, value, v => _s.DoubleClick = v);
     }
 
+    public bool ShowTooltip
+    {
+        get => _s.ShowTooltip;
+        set => Update(_s.ShowTooltip, value, v => _s.ShowTooltip = v);
+    }
+
+    /// <summary>The per-process list is gathered only while the overlay's details can be shown.</summary>
+    internal void SetDetailSampling(bool on) => _telemetry.SetProcessSampling(on);
+
     /// <summary>Called by the overlay after the user dragged it.</summary>
     internal void SetPosition(int? offset, int? freeX, int? freeY)
     {

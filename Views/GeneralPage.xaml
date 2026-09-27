@@ -89,6 +89,11 @@
                     <ComboBox Style="{StaticResource SettingsCombo}" ItemsSource="{Binding DoubleClickOptions}"
                               SelectedValue="{Binding DoubleClick}" />
                 </controls:SettingRow>
+                <Border Style="{StaticResource Divider}" />
+                <controls:SettingRow Glyph="&#xE8FD;" Title="Подробности при наведении"
+                                     Description="Задержите указатель на оверлее — появятся точные значения и процессы, которые сильнее всего нагружают процессор">
+                    <CheckBox Style="{StaticResource ToggleSwitch}" IsChecked="{Binding ShowTooltip}" />
+                </controls:SettingRow>
             </StackPanel>
         </Border>
     </StackPanel>

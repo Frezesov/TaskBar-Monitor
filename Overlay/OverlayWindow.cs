@@ -23,11 +23,13 @@ internal sealed class OverlayWindow : Window
     private readonly TaskbarLocator _taskbar = new();
     private readonly OverlayMenu _menu;
     private readonly DispatcherTimer _repositionTimer;
+    private readonly DispatcherTimer _hoverTimer;
     private readonly Native.WinEventDelegate _winEventProc;
     private readonly uint _taskbarCreatedMessage = Native.RegisterWindowMessage("TaskbarCreated");
     private readonly uint _appBarMessage = Native.RegisterWindowMessage("TaskbarMonitor.AppBarNotify");
 
     private IntPtr _hwnd;
+    private OverlayTooltip? _tooltip;
     private IntPtr _foregroundHook;
     private IntPtr _locationHook;
     private uint _hookedExplorerPid;
@@ -67,12 +69,28 @@ internal sealed class OverlayWindow : Window
             UpdateVisibility();
         };
 
-        MouseEnter += (_, _) => _view.IsHot = true;
-        MouseLeave += (_, _) => _view.IsHot = false;
+        _hoverTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
+        _hoverTimer.Tick += (_, _) =>
+        {
+            _hoverTimer.Stop();
+            ShowDetails();
+        };
+
+        MouseEnter += (_, _) =>
+        {
+            _view.IsHot = true;
+            BeginHover();
+        };
+        MouseLeave += (_, _) =>
+        {
+            _view.IsHot = false;
+            EndHover();
+        };
         MouseLeftButtonDown += OnLeftButtonDown;
         MouseRightButtonUp += (_, e) =>
         {
             e.Handled = true;
+            EndHover();
             _menu.Show(_vm.ActiveSurface);
         };
         SizeChanged += (_, _) => ScheduleReposition();
@@ -153,6 +171,8 @@ internal sealed class OverlayWindow : Window
         _vm.OverlayChanged -= ApplySettings;
         _vm.SnapshotUpdated -= OnSnapshot;
         _repositionTimer.Stop();
+        EndHover();
+        _tooltip?.Close();
         UnregisterAppBar();
         if (_foregroundHook != IntPtr.Zero)
             Native.UnhookWinEvent(_foregroundHook);
@@ -168,6 +188,8 @@ internal sealed class OverlayWindow : Window
         if (_ownedByTaskbar != (_vm.SnapToTaskbar && _taskbar.IsValid))
             ApplyOwner();
         Topmost = _vm.AlwaysOnTop;
+        if (!_vm.ShowTooltip)
+            EndHover();
         _view.ApplyPalette(_vm.Palette, animate: true);
         RebuildContent();
         _view.Relayout();
@@ -177,6 +199,8 @@ internal sealed class OverlayWindow : Window
     private void OnSnapshot()
     {
         RebuildContent();
+        if (_tooltip is { IsVisible: true })
+            _tooltip.Update(_vm.Snapshot, _vm.Settings);
         if (!_taskbar.IsValid && _taskbar.Refresh())
             AttachToShell();
         UpdateVisibility();
@@ -301,6 +325,7 @@ internal sealed class OverlayWindow : Window
         }
         else if (IsVisible)
         {
+            EndHover();
             if (!animate)
             {
                 Hide();
@@ -332,6 +357,7 @@ internal sealed class OverlayWindow : Window
     private void OnLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
         e.Handled = true;
+        EndHover();
         if (e.ClickCount == 2)
         {
             switch (_vm.DoubleClick)
@@ -361,6 +387,31 @@ internal sealed class OverlayWindow : Window
             _dragging = false;
         }
         SaveDraggedPosition();
+    }
+
+    private void BeginHover()
+    {
+        if (!_vm.ShowTooltip || _dragging)
+            return;
+        // Process sampling starts right away, so its first result is ready about when the details appear.
+        _vm.SetDetailSampling(true);
+        _hoverTimer.Start();
+    }
+
+    private void EndHover()
+    {
+        _hoverTimer.Stop();
+        _tooltip?.Dismiss();
+        _vm.SetDetailSampling(false);
+    }
+
+    private void ShowDetails()
+    {
+        if (!IsMouseOver || _dragging || !IsVisible)
+            return;
+        _tooltip ??= new OverlayTooltip();
+        _tooltip.Update(_vm.Snapshot, _vm.Settings);
+        _tooltip.ShowFor(_hwnd, _vm.ActiveSurface);
     }
 
     private void SaveDraggedPosition()

@@ -48,6 +48,7 @@ internal static class Native
     public const int GWLP_HWNDPARENT = -8;
 
     public const uint WS_CAPTION = 0x00C00000;
+    public const uint WS_EX_TRANSPARENT = 0x00000020;
     public const uint WS_EX_TOOLWINDOW = 0x00000080;
     public const uint WS_EX_NOACTIVATE = 0x08000000;
 

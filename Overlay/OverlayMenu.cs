@@ -9,17 +9,10 @@ using TaskbarMonitor.ViewModels;
 
 namespace TaskbarMonitor.Overlay;
 
-/// <summary>
-/// Right-click menu of the overlay. It follows the taskbar's theme (Windows mode), not the app mode,
-/// so it looks like the taskbar's own menus even with the "Custom" color mode.
-/// </summary>
+/// <summary>Right-click menu of the overlay, themed like the taskbar (see <see cref="TaskbarFluentTheme"/>).</summary>
 internal sealed class OverlayMenu
 {
-    private const string FluentLight = "pack://application:,,,/PresentationFramework.Fluent;component/Themes/Fluent.Light.xaml";
-    private const string FluentDark = "pack://application:,,,/PresentationFramework.Fluent;component/Themes/Fluent.Dark.xaml";
-
     private readonly ContextMenu _menu;
-    private readonly Dictionary<bool, ResourceDictionary?> _themes = [];
     private Window? _host;
     private bool? _appliedLight;
 
@@ -59,7 +52,7 @@ internal sealed class OverlayMenu
 
     public void Show(TaskbarSurface surface)
     {
-        ApplyTheme(surface);
+        TaskbarFluentTheme.Apply(_menu.Resources.MergedDictionaries, surface, ref _appliedLight);
         _host ??= CreateHost();
         _host.Show();
         _host.Activate();
@@ -68,40 +61,6 @@ internal sealed class OverlayMenu
         _menu.PlacementTarget = _host;
         _menu.Placement = PlacementMode.MousePoint;
         _menu.IsOpen = true;
-    }
-
-    private void ApplyTheme(TaskbarSurface surface)
-    {
-        // High contrast keeps the app theme: WPF's Fluent HC dictionary already follows system colors.
-        bool? light = surface switch
-        {
-            TaskbarSurface.Light => true,
-            TaskbarSurface.Dark or TaskbarSurface.Accent => false,
-            _ => null,
-        };
-        if (light == _appliedLight)
-            return;
-        _appliedLight = light;
-        _menu.Resources.MergedDictionaries.Clear();
-        if (light is { } isLight && Load(isLight) is { } dictionary)
-            _menu.Resources.MergedDictionaries.Add(dictionary);
-    }
-
-    private ResourceDictionary? Load(bool light)
-    {
-        if (_themes.TryGetValue(light, out var cached))
-            return cached;
-        ResourceDictionary? dictionary = null;
-        try
-        {
-            dictionary = new ResourceDictionary { Source = new Uri(light ? FluentLight : FluentDark, UriKind.Absolute) };
-        }
-        catch (Exception ex) when (ex is System.IO.IOException or System.Windows.Markup.XamlParseException)
-        {
-            ErrorLog.Write(ex);
-        }
-        _themes[light] = dictionary;
-        return dictionary;
     }
 
     // A context menu only closes on outside clicks when its app owns the foreground,
