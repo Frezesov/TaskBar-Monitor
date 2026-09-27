@@ -236,7 +236,13 @@
             <StackPanel>
                 <controls:SettingRow Glyph="&#xE8D2;" Title="Шрифт" Description="Segoe UI Variable — тот же, что у часов на панели задач">
                     <ComboBox Style="{StaticResource SettingsCombo}" DisplayMemberPath="" SelectedValuePath=""
-                              ItemsSource="{Binding FontOptions}" SelectedItem="{Binding FontFamily}" />
+                              ItemsSource="{Binding FontOptions}" SelectedItem="{Binding FontFamily}">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding}" FontFamily="{Binding Converter={StaticResource FontPreview}}" />
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
                 </controls:SettingRow>
                 <Border Style="{StaticResource Divider}" />
                 <controls:SettingRow Title="Начертание">

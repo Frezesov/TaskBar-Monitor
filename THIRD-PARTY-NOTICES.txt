@@ -28,5 +28,12 @@ SOFTWARE.
 
 --------------------------------------------------------------------------------
 
-Inter font — https://rsms.me/inter/
-SIL Open Font License 1.1, see Assets/Fonts/LICENSE.txt.
+Fonts, all under the SIL Open Font License 1.1 (texts in Assets/Fonts):
+
+Inter — https://rsms.me/inter/ — Assets/Fonts/Inter-OFL.txt
+Montserrat — https://github.com/JulietaUla/Montserrat — Assets/Fonts/Montserrat-OFL.txt
+Roboto — https://github.com/googlefonts/roboto-3-classic — Assets/Fonts/Roboto-OFL.txt
+JetBrains Mono — https://github.com/JetBrains/JetBrainsMono — Assets/Fonts/JetBrainsMono-OFL.txt
+
+Montserrat, Roboto and JetBrains Mono are reduced to Latin, Cyrillic and punctuation
+by tools/subset-fonts.py; the glyphs themselves are unchanged.

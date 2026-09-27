@@ -62,7 +62,7 @@ public sealed class AppSettings
     public int WarnTemp { get; set; } = 75;
     public int CritTemp { get; set; } = 85;
     public SparklineMode Sparklines { get; set; } = SparklineMode.Inline;
-    public string FontFamily { get; set; } = "Segoe UI Variable Text";
+    public string FontFamily { get; set; } = OverlayFonts.Default;
     public TextWeight FontWeight { get; set; } = TextWeight.SemiBold;
     public int ScalePercent { get; set; } = 100;
     public int ColumnSpacing { get; set; } = 6;
@@ -101,7 +101,7 @@ public sealed class AppSettings
         ScalePercent = Math.Clamp(ScalePercent, 80, 150);
         ColumnSpacing = Math.Clamp(ColumnSpacing, 0, 24);
         if (string.IsNullOrWhiteSpace(FontFamily))
-            FontFamily = "Segoe UI Variable Text";
+            FontFamily = OverlayFonts.Default;
     }
 }
 

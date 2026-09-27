@@ -14,6 +14,7 @@
     <Duration x:Key="MotionFast">0:0:0.15</Duration>
 
     <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+    <controls:FontPreviewConverter x:Key="FontPreview" />
 
     <Style x:Key="FocusRing">
         <Setter Property="Control.Template">

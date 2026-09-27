@@ -18,9 +18,6 @@ public sealed record DiagnosticRow(string Name, string Value, SolidColorBrush? C
 
 public sealed class SettingsViewModel : ObservableObject, IDisposable
 {
-    private static readonly string[] FontCandidates =
-        ["Segoe UI Variable Text", "Segoe UI Variable Display", "Segoe UI", "Bahnschrift", "Inter", "Cascadia Mono", "Consolas"];
-
     private readonly AppSettings _s;
     private readonly SettingsStore _store;
     private readonly ThemeWatcher _theme;
@@ -65,7 +62,7 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
         ResetAppearanceCommand = new RelayCommand(ResetAppearance);
         RefreshSourcesCommand = new RelayCommand(RefreshSources);
 
-        FontOptions = FontCandidates.Where(IsFontAvailable).ToList();
+        FontOptions = OverlayFonts.Available();
         RefreshSources();
 
         _theme.Changed += OnThemeChanged;
@@ -490,7 +487,7 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
     public string FontFamily
     {
         get => _s.FontFamily;
-        set => Update(_s.FontFamily, value ?? "Segoe UI Variable Text", v => _s.FontFamily = v);
+        set => Update(_s.FontFamily, value ?? OverlayFonts.Default, v => _s.FontFamily = v);
     }
 
     public IReadOnlyList<Option<TextWeight>> FontWeightOptions { get; } =
@@ -667,10 +664,6 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
         _saveTimer.Stop();
         _saveTimer.Start();
     }
-
-    private static bool IsFontAvailable(string name) =>
-        name == "Inter" || Fonts.SystemFontFamilies.Any(f => f.FamilyNames.Values.Any(v => string.Equals(v, name, StringComparison.OrdinalIgnoreCase)))
-        || name.StartsWith("Segoe UI Variable", StringComparison.Ordinal) && Fonts.SystemFontFamilies.Any(f => f.Source.StartsWith("Segoe UI Variable", StringComparison.Ordinal));
 
     private void OpenTaskManager()
     {

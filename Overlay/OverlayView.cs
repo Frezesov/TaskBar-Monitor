@@ -145,7 +145,7 @@ public sealed class OverlayView : FrameworkElement
             TextWeight.Bold => FontWeights.Bold,
             _ => FontWeights.SemiBold,
         };
-        var family = ResolveFont(_settings.FontFamily);
+        var family = OverlayFonts.Resolve(_settings.FontFamily);
         double fontSize = (_settings.TwoRows ? 11.5 : 13) * scale;
         double lineHeight = Math.Ceiling(fontSize * family.LineSpacing);
         return new Metrics(new Typeface(family, FontStyles.Normal, weight, FontStretches.Normal), fontSize, lineHeight, scale,
@@ -327,11 +327,6 @@ public sealed class OverlayView : FrameworkElement
     }
 
     protected override void OnDpiChanged(DpiScale oldDpi, DpiScale newDpi) => Relayout();
-
-    // Inter ships inside the app; everything else is a system font.
-    public static FontFamily ResolveFont(string name) => name == "Inter"
-        ? new FontFamily(new Uri("pack://application:,,,/"), "./Assets/Fonts/#Inter, Segoe UI")
-        : new FontFamily(name + ", Segoe UI");
 
     private static Brush Freeze(Brush brush)
     {
